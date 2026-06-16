@@ -1,0 +1,19 @@
+# Large model files — excluded from git
+models/rf_model.pkl
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Data files (large)
+data/processed/
+
+# Environment
+venv/
+.env
+
+# OS files
+.DS_Store
+Thumbs.db

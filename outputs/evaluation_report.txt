@@ -1,0 +1,95 @@
+============================================================
+  MENDELEY CROP RECOMMENDATION — EVALUATION REPORT
+  Group 18 | Kwara State University
+============================================================
+
+Dataset        : Mendeley Ethiopian Crop Dataset
+Original rows  : 3,867
+After Fallow   : 3,841
+Augmented rows : ~5,400
+Total features : 54
+Crop classes   : 11 (Fallow removed)
+
+Best XGBoost Params (Grid Search):
+  colsample_bytree: 0.8
+  learning_rate: 0.1
+  max_depth: 7
+  n_estimators: 500
+  subsample: 0.8
+
+Model Accuracies:
+  XGBoost       : 62.81%
+  Random Forest : 56.78%
+  Ensemble      : 62.62%
+
+Best Model : XGBoost (62.81%)
+
+Classification Report:
+              precision    recall  f1-score   support
+
+      Barley       0.36      0.41      0.38       101
+        Bean       0.38      0.25      0.30        60
+     Dagussa       0.84      0.80      0.82        60
+       Maize       0.50      0.58      0.54       146
+  Niger seed       0.86      0.73      0.79        60
+         Pea       0.79      0.77      0.78        60
+      Potato       0.92      0.92      0.92        60
+  Red Pepper       0.84      0.98      0.91        60
+     Sorghum       0.80      0.68      0.74        60
+        Teff       0.66      0.67      0.67       252
+       Wheat       0.47      0.44      0.45       143
+
+    accuracy                           0.63      1062
+   macro avg       0.68      0.66      0.66      1062
+weighted avg       0.63      0.63      0.63      1062
+
+
+Confusion Matrix:
+            Barley  Bean  Dagussa  Maize  Niger seed  Pea  Potato  Red Pepper  Sorghum  Teff  Wheat
+Barley          41     6        1      9           0    1       0           1        0    12     30
+Bean            18    15        0      5           1    2       0           1        0    12      6
+Dagussa          0     0       48      8           1    0       1           1        0     0      1
+Maize            8     1        3     85           2    0       0           4        1    27     15
+Niger seed       1     0        1      4          44    1       0           2        3     4      0
+Pea              0     0        0      2           1   46       1           1        1     7      1
+Potato           2     0        0      0           0    0      55           0        0     1      2
+Red Pepper       0     0        0      1           0    0       0          59        0     0      0
+Sorghum          0     1        1      5           2    0       2           0       41     6      2
+Teff            12     6        3     36           0    8       1           1        1   170     14
+Wheat           31    11        0     14           0    0       0           0        4    20     63
+
+Top 20 Feature Importances (XGBoost):
+   1. PRECTOTCORR-W                0.0589
+   2. WD10M                        0.0585
+   3. QV2M-Au                      0.0424
+   4. CLOUD_AMT                    0.0387
+   5. soil_black                   0.0346
+   6. T_range_Au                   0.0341
+   7. T2M_MIN-Au                   0.0325
+   8. PREC_annual                  0.0307
+   9. PRECTOTCORR-Su               0.0304
+  10. PRECTOTCORR-Au               0.0298
+  11. T_range_Su                   0.0281
+  12. QV2M-Su                      0.0280
+  13. QV2M_annual                  0.0227
+  14. T_MIN_annual                 0.0227
+  15. T2M_MAX-W                    0.0204
+  16. QV2M-W                       0.0197
+  17. GWETTOP                      0.0191
+  18. T_MAX_annual                 0.0186
+  19. T2M_MAX-Su                   0.0183
+  20. wet_ratio                    0.0179
+
+
+Per-Class Accuracy:
+  Barley         41/101  40.6%
+  Bean           15/60  25.0%
+  Dagussa        48/60  80.0%
+  Maize          85/146  58.2%
+  Niger seed     44/60  73.3%
+  Pea            46/60  76.7%
+  Potato         55/60  91.7%
+  Red Pepper     59/60  98.3%
+  Sorghum        41/60  68.3%
+  Teff           170/252  67.5%
+  Wheat          63/143  44.1%
