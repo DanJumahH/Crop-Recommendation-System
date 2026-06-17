@@ -3,385 +3,232 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crop Recommendation System</title>
+  <title>CropIQ — Crop Recommendation System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
 </head>
 <body>
 
-<!-- HEADER -->
-<header>
-  <div class="header-inner">
-    <div class="header-left">
-      <img src="{{ url_for('static', filename='img/leaf.svg') }}"
-           class="header-icon" alt=""/>
-      <div>
-        <div class="header-title">Crop Recommendation System</div>
-        <div class="header-sub">Agricultural Decision Support — Group 18</div>
-      </div>
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="logo">CropIQ</span>
+    <div class="nav-links">
+      <a href="#about" class="nav-link">About</a>
+      <span class="nav-sep">|</span>
+      <span class="nav-uni">Kwara State University</span>
     </div>
-    <div class="header-badge">Kwara State University</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Soil &times; Climate &times; Terrain</p>
+    <h1 class="hero-title">Know what your<br>land wants to grow.</h1>
+    <p class="hero-sub">Pin your field on the map, pick your soil colour, and CropIQ fetches real climate and terrain data automatically — then recommends the best crops for your land.</p>
+    <div class="hero-actions">
+      <a href="#step1" class="btn-primary">Get started &darr;</a>
+      <a href="#about" class="btn-ghost">About the project</a>
+    </div>
   </div>
 </header>
 
-<!-- PAGE BANNER -->
-<div class="banner">
-  <div class="banner-inner">
-    <div class="banner-text">
-      <h1>Farm Crop Advisory</h1>
-      <p>Select your farm location and soil type to receive
-         data-driven crop recommendations.</p>
-    </div>
-  </div>
-</div>
+<!-- MAIN FORM -->
+<main class="form-section">
+  <div class="form-wrap">
 
-<div class="container">
-
-  <!-- PROGRESS STEPS -->
-  <div class="progress-bar">
-    <div class="progress-step active" id="step-ind-1">
-      <div class="ps-circle">1</div>
-      <div class="ps-label">Farm Location</div>
-    </div>
-    <div class="progress-line"></div>
-    <div class="progress-step" id="step-ind-2">
-      <div class="ps-circle">2</div>
-      <div class="ps-label">Soil Type</div>
-    </div>
-    <div class="progress-line"></div>
-    <div class="progress-step" id="step-ind-3">
-      <div class="ps-circle">3</div>
-      <div class="ps-label">Results</div>
-    </div>
-  </div>
-
-  <div class="two-col">
-
-    <!-- LEFT -->
-    <div class="left-col">
-
-      <!-- LOCATION -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon">01</div>
-          <div>
-            <div class="card-title">Farm Location</div>
-            <div class="card-desc">Search by address or click the map</div>
-          </div>
-        </div>
-
-        <div class="tab-row">
-          <button class="tab-btn active" onclick="switchTab(this,'addr')">
-            Address Search
-          </button>
-          <button class="tab-btn" onclick="switchTab(this,'map')">
-            Map Selection
-          </button>
-        </div>
-
-        <div class="tab-panel active" id="tab-addr">
-          <div class="input-row">
-            <input type="text" id="addrInput"
-                   placeholder="Enter farm address e.g. Jimma, Ethiopia"/>
-            <button class="btn-action" onclick="searchAddr()">Search</button>
-          </div>
-        </div>
-
-        <div class="tab-panel" id="tab-map">
-          <div class="input-row">
-            <input type="text" id="mapSearch"
-                   placeholder="Search location on map"/>
-            <button class="btn-action" onclick="searchOnMap()">Search</button>
-          </div>
-          <div id="map"></div>
-        </div>
-
-        <div class="loc-box hidden" id="locConfirmed">
-          <div class="loc-dot"></div>
-          <div class="loc-info">
-            <div class="loc-name"   id="locName"></div>
-            <div class="loc-coords" id="locCoords"></div>
-          </div>
-          <div class="loc-status">Located</div>
-        </div>
-
-        <div class="fetch-bar hidden" id="afBar">
-          <div class="fetch-spinner"></div>
-          <span id="afMsg">Retrieving climate and terrain data...</span>
-        </div>
-
-        <!-- CLIMATE SUMMARY -->
-        <div class="env-panel hidden" id="climateSummary">
-          <div class="env-title">Environmental Data</div>
-          <div class="env-grid">
-            <div class="env-item">
-              <div class="env-label">Avg Temperature</div>
-              <div class="env-value" id="cs-temp">—</div>
-            </div>
-            <div class="env-item">
-              <div class="env-label">Annual Rainfall</div>
-              <div class="env-value" id="cs-rain">—</div>
-            </div>
-            <div class="env-item">
-              <div class="env-label">Humidity</div>
-              <div class="env-value" id="cs-hum">—</div>
-            </div>
-            <div class="env-item">
-              <div class="env-label">Elevation</div>
-              <div class="env-value" id="cs-elev">—</div>
-            </div>
-            <div class="env-item">
-              <div class="env-label">Slope</div>
-              <div class="env-value" id="cs-slope">—</div>
-            </div>
-            <div class="env-item">
-              <div class="env-label">Cloud Cover</div>
-              <div class="env-value" id="cs-cloud">—</div>
-            </div>
-          </div>
-          <div class="env-source">
-            Source: Open-Meteo ERA5 Climate Reanalysis &
-            Open-Elevation NASADEM
-          </div>
-        </div>
-
-        <div class="fetch-done hidden" id="afDone">
-          Climate and terrain data loaded. Expand Advanced Parameters
-          below to review or adjust values.
+    <!-- STEP 1: MAP -->
+    <div class="step-block" id="step1">
+      <div class="step-header">
+        <span class="step-num">01</span>
+        <div class="step-meta">
+          <div class="group-label">Pin Your Field Location</div>
+          <p class="step-hint">Click anywhere on the map — or use your current location. Climate and terrain data loads automatically.</p>
         </div>
       </div>
 
-      <!-- SOIL TYPE -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon">02</div>
-          <div>
-            <div class="card-title">Soil Classification</div>
-            <div class="card-desc">Select the colour that best matches
-              your farm soil</div>
-          </div>
+      <div class="map-toolbar">
+        <div class="search-wrap">
+          <input type="text" id="address-input" placeholder="Search address or place name…" autocomplete="off"/>
+          <button id="search-btn" class="map-btn">Search</button>
         </div>
-        <div class="soil-grid">
-          <div class="soil-card" onclick="selectSoil(this,'black')">
-            <div class="soil-swatch" style="background:#1a1a1a;"></div>
-            <div class="soil-name">Black</div>
-          </div>
-          <div class="soil-card" onclick="selectSoil(this,'brown')">
-            <div class="soil-swatch" style="background:#7B4A2D;"></div>
-            <div class="soil-name">Brown</div>
-          </div>
-          <div class="soil-card" onclick="selectSoil(this,'dark brown')">
-            <div class="soil-swatch" style="background:#4A2C17;"></div>
-            <div class="soil-name">Dark Brown</div>
-          </div>
-          <div class="soil-card" onclick="selectSoil(this,'dark gray')">
-            <div class="soil-swatch" style="background:#4A4A4A;"></div>
-            <div class="soil-name">Dark Gray</div>
-          </div>
-          <div class="soil-card" onclick="selectSoil(this,'gray')">
-            <div class="soil-swatch" style="background:#9A9A9A;"></div>
-            <div class="soil-name">Gray</div>
-          </div>
-          <div class="soil-card" onclick="selectSoil(this,'red')">
-            <div class="soil-swatch" style="background:#B33A2A;"></div>
-            <div class="soil-name">Red</div>
-          </div>
-          <div class="soil-card" onclick="selectSoil(this,'reddish brown')">
-            <div class="soil-swatch" style="background:#8B3A2A;"></div>
-            <div class="soil-name">Reddish Brown</div>
-          </div>
-          <div class="soil-card" onclick="selectSoil(this,'yellow')">
-            <div class="soil-swatch" style="background:#C8A84B;"></div>
-            <div class="soil-name">Yellow</div>
-          </div>
-        </div>
-        <div class="soil-err hidden" id="soilErr">
-          Please select a soil type to continue.
-        </div>
-      </div>
-
-    </div>
-
-    <!-- RIGHT -->
-    <div class="right-col">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon">03</div>
-          <div>
-            <div class="card-title">Parameters</div>
-            <div class="card-desc">Auto-filled from location data —
-              adjust only if needed</div>
-          </div>
-        </div>
-
-        <div class="info-note">
-          Soil nutrient values, topographic features and climate data
-          are automatically retrieved when a farm location is selected.
-          Manual adjustment is available below for users with field
-          measurement data.
-        </div>
-
-        <button class="adv-toggle" onclick="toggleAdv(this)">
-          Show Advanced Parameters
-        </button>
-        <div class="adv-panel" id="advPanel">
-
-          <div class="param-section">Soil Nutrients</div>
-          <div class="param-grid">
-            <div class="param-group">
-              <label>Soil pH</label>
-              <input type="number" id="fPh" step="0.01" value="5.8"/>
-            </div>
-            <div class="param-group">
-              <label>Nitrogen N (g/kg)</label>
-              <input type="number" id="fN" step="0.001" value="0.18"/>
-            </div>
-            <div class="param-group">
-              <label>Phosphorus P (mg/kg)</label>
-              <input type="number" id="fP" step="0.01" value="10"/>
-            </div>
-            <div class="param-group">
-              <label>Potassium K (mg/kg)</label>
-              <input type="number" id="fK" step="0.01" value="300"/>
-            </div>
-            <div class="param-group">
-              <label>Zinc Zn (mg/kg)</label>
-              <input type="number" id="fZn" step="0.01" value="1.8"/>
-            </div>
-            <div class="param-group">
-              <label>Sulphur S (mg/kg)</label>
-              <input type="number" id="fS" step="0.01" value="11"/>
-            </div>
-          </div>
-
-          <div class="param-section">Topographic Features</div>
-          <div class="param-grid">
-            <div class="param-group">
-              <label>Elevation (m)</label>
-              <input type="number" id="fElev" step="1" value="2300"/>
-            </div>
-            <div class="param-group">
-              <label>Slope (degrees)</label>
-              <input type="number" id="fSlope" step="0.1" value="5.0"/>
-            </div>
-            <div class="param-group">
-              <label>Aspect (degrees)</label>
-              <input type="number" id="fAspect" step="1" value="180"/>
-            </div>
-            <div class="param-group">
-              <label>TWI</label>
-              <input type="number" id="fTWI" step="0.01" value="8.5"/>
-            </div>
-          </div>
-
-          <div class="param-section">Seasonal Climate</div>
-          <div class="param-grid">
-            <div class="param-group">
-              <label>Max Temp Winter (C)</label>
-              <input type="number" id="fT2M_MAX_W" step="0.1" value="23.5"/>
-            </div>
-            <div class="param-group">
-              <label>Max Temp Spring (C)</label>
-              <input type="number" id="fT2M_MAX_Sp" step="0.1" value="24.8"/>
-            </div>
-            <div class="param-group">
-              <label>Max Temp Summer (C)</label>
-              <input type="number" id="fT2M_MAX_Su" step="0.1" value="22.1"/>
-            </div>
-            <div class="param-group">
-              <label>Max Temp Autumn (C)</label>
-              <input type="number" id="fT2M_MAX_Au" step="0.1" value="23.9"/>
-            </div>
-            <div class="param-group">
-              <label>Rainfall Winter (mm)</label>
-              <input type="number" id="fPREC_W" step="0.1" value="1.2"/>
-            </div>
-            <div class="param-group">
-              <label>Rainfall Spring (mm)</label>
-              <input type="number" id="fPREC_Sp" step="0.1" value="2.8"/>
-            </div>
-            <div class="param-group">
-              <label>Rainfall Summer (mm)</label>
-              <input type="number" id="fPREC_Su" step="0.1" value="8.5"/>
-            </div>
-            <div class="param-group">
-              <label>Rainfall Autumn (mm)</label>
-              <input type="number" id="fPREC_Au" step="0.1" value="3.1"/>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="err-box hidden" id="errBox"></div>
-
-        <button class="btn-submit" onclick="submitPrediction()">
-          Generate Crop Recommendation
+        <button id="locate-btn" class="map-btn locate-btn" title="Use my current location">
+          &#9737; My Location
         </button>
       </div>
-    </div>
 
-  </div>
+      <div id="map"></div>
 
-  <!-- LOADING -->
-  <div class="loading hidden" id="loading">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Analysing farm conditions...</div>
-    <div class="loading-sub">Retrieving climate data and
-      running prediction model</div>
-  </div>
-
-  <!-- RESULTS -->
-  <div class="results hidden" id="results">
-
-    <div class="results-header">
-      <div class="results-title">Crop Recommendation Report</div>
-      <div class="results-meta" id="resultsMeta"></div>
-    </div>
-
-    <div class="accuracy-banner">
-      <div class="ab-left">
-        <div class="ab-value">62.81%</div>
-        <div class="ab-label">Model Accuracy</div>
+      <div class="location-status" id="location-status">
+        <span id="status-text">No location selected — click map or search above</span>
+        <span class="fetch-indicator" id="fetch-indicator" hidden>
+          <span class="spinner"></span> Fetching climate &amp; terrain…
+        </span>
+        <span class="fetch-done" id="fetch-done" hidden>&#10003; Data loaded</span>
       </div>
-      <div class="ab-divider"></div>
-      <div class="ab-right">
-        The suitability scores below reflect the model's confidence
-        for each crop based on your specific farm conditions.
-        These are independent values — not derived from the
-        overall model accuracy.
+
+      <div class="env-chips" id="env-chips" hidden>
+        <div class="chip" id="chip-loc"></div>
+        <div class="chip" id="chip-elev"></div>
+        <div class="chip" id="chip-temp"></div>
+        <div class="chip" id="chip-rain"></div>
       </div>
     </div>
 
-    <div class="disclaimer">
-      Recommendations are generated based on Ethiopian agroclimatic
-      data (Mendeley dataset). Results should be used alongside
-      local agricultural expertise and field observations.
+    <!-- STEP 2: SOIL -->
+    <div class="step-block" id="step2">
+      <div class="step-header">
+        <span class="step-num">02</span>
+        <div class="step-meta">
+          <div class="group-label">Soil Classification</div>
+          <p class="step-hint">Select the colour that best matches your farm soil. Nutrient values pre-fill automatically — adjust if you have lab results.</p>
+        </div>
+      </div>
+      <div class="soil-grid" id="soil-grid"></div>
+      <input type="hidden" id="soil-color-input" value=""/>
     </div>
 
-    <div class="results-grid" id="resultsGrid"></div>
+    <!-- STEP 3: NUTRIENTS -->
+    <div class="step-block" id="step3">
+      <div class="step-header">
+        <span class="step-num">03</span>
+        <div class="step-meta">
+          <div class="group-label">Soil Nutrients <span class="auto-tag">Pre-filled from soil type</span></div>
+          <p class="step-hint">Typical values from your selected soil. Update with lab measurements if available.</p>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>pH</label><input type="number" id="Ph" step="0.1" min="0" max="14"/></div>
+        <div class="field"><label>Nitrogen (N) mg/kg</label><input type="number" id="N" step="0.01"/></div>
+        <div class="field"><label>Phosphorus (P) mg/kg</label><input type="number" id="P" step="0.01"/></div>
+        <div class="field"><label>Potassium (K) mg/kg</label><input type="number" id="K" step="0.01"/></div>
+        <div class="field"><label>Zinc (Zn) mg/kg</label><input type="number" id="Zn" step="0.01"/></div>
+        <div class="field"><label>Sulphur (S) mg/kg</label><input type="number" id="S" step="0.01"/></div>
+      </div>
+    </div>
+
+    <!-- STEP 4: CLIMATE (collapsed) -->
+    <div class="step-block" id="step4">
+      <div class="step-header">
+        <span class="step-num">04</span>
+        <div class="step-meta">
+          <div class="group-label">Climate Data <span class="auto-tag">Auto-filled</span></div>
+          <p class="step-hint">Fetched from Open-Meteo for your pinned location. Expand to review or override.</p>
+        </div>
+        <button type="button" class="toggle-btn" id="climate-toggle">Show &#8964;</button>
+      </div>
+      <div id="climate-fields" hidden>
+        <div class="sub-label">Winter (Dec–Feb)</div>
+        <div class="field-row">
+          <div class="field"><label>Max Temp °C</label><input type="number" id="T2M_MAX-W" step="0.1"/></div>
+          <div class="field"><label>Min Temp °C</label><input type="number" id="T2M_MIN-W" step="0.1"/></div>
+          <div class="field"><label>Precip mm/day</label><input type="number" id="PRECTOTCORR-W" step="0.01"/></div>
+          <div class="field"><label>Humidity g/kg</label><input type="number" id="QV2M-W" step="0.01"/></div>
+        </div>
+        <div class="sub-label">Spring (Mar–May)</div>
+        <div class="field-row">
+          <div class="field"><label>Max Temp °C</label><input type="number" id="T2M_MAX-Sp" step="0.1"/></div>
+          <div class="field"><label>Min Temp °C</label><input type="number" id="T2M_MIN-Sp" step="0.1"/></div>
+          <div class="field"><label>Precip mm/day</label><input type="number" id="PRECTOTCORR-Sp" step="0.01"/></div>
+          <div class="field"><label>Humidity g/kg</label><input type="number" id="QV2M-Sp" step="0.01"/></div>
+        </div>
+        <div class="sub-label">Summer (Jun–Aug)</div>
+        <div class="field-row">
+          <div class="field"><label>Max Temp °C</label><input type="number" id="T2M_MAX-Su" step="0.1"/></div>
+          <div class="field"><label>Min Temp °C</label><input type="number" id="T2M_MIN-Su" step="0.1"/></div>
+          <div class="field"><label>Precip mm/day</label><input type="number" id="PRECTOTCORR-Su" step="0.01"/></div>
+          <div class="field"><label>Humidity g/kg</label><input type="number" id="QV2M-Su" step="0.01"/></div>
+        </div>
+        <div class="sub-label">Autumn (Sep–Nov)</div>
+        <div class="field-row">
+          <div class="field"><label>Max Temp °C</label><input type="number" id="T2M_MAX-Au" step="0.1"/></div>
+          <div class="field"><label>Min Temp °C</label><input type="number" id="T2M_MIN-Au" step="0.1"/></div>
+          <div class="field"><label>Precip mm/day</label><input type="number" id="PRECTOTCORR-Au" step="0.01"/></div>
+          <div class="field"><label>Humidity g/kg</label><input type="number" id="QV2M-Au" step="0.01"/></div>
+        </div>
+        <div class="sub-label">Other</div>
+        <div class="field-row">
+          <div class="field"><label>Wind Dir °</label><input type="number" id="WD10M" step="0.1"/></div>
+          <div class="field"><label>Wind Range m/s</label><input type="number" id="WS2M_RANGE" step="0.01"/></div>
+          <div class="field"><label>Soil Wetness</label><input type="number" id="GWETTOP" step="0.01"/></div>
+          <div class="field"><label>Cloud Amount %</label><input type="number" id="CLOUD_AMT" step="0.1"/></div>
+          <div class="field"><label>Surface Pressure</label><input type="number" id="PS" step="0.01"/></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: TERRAIN (collapsed) -->
+    <div class="step-block" id="step5">
+      <div class="step-header">
+        <span class="step-num">05</span>
+        <div class="step-meta">
+          <div class="group-label">Terrain <span class="auto-tag">Auto-filled</span></div>
+          <p class="step-hint">Derived from map pin using SRTM elevation data.</p>
+        </div>
+        <button type="button" class="toggle-btn" id="terrain-toggle">Show &#8964;</button>
+      </div>
+      <div id="terrain-fields" hidden>
+        <div class="field-row">
+          <div class="field"><label>Elevation m</label><input type="number" id="elevation" step="1"/></div>
+          <div class="field"><label>Slope °</label><input type="number" id="slope" step="0.1"/></div>
+          <div class="field"><label>Aspect °</label><input type="number" id="aspect" step="0.1"/></div>
+          <div class="field"><label>TWI</label><input type="number" id="TWI" step="0.01"/></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="form-actions">
+      <button class="btn-submit" id="submit-btn">
+        <span class="btn-text">Get Recommendation</span>
+        <span class="btn-loading" hidden><span class="spinner"></span> Analysing…</span>
+      </button>
+      <p class="submit-warn" id="submit-warn" hidden></p>
+    </div>
+
+    <!-- RESULTS -->
+    <section class="results" id="results" hidden>
+      <div class="results-meta">
+        <p class="results-eyebrow">Recommended Crops</p>
+        <h2 class="results-title">Your field is best suited for:</h2>
+        <div class="results-location" id="results-location"></div>
+      </div>
+      <div class="results-cards" id="results-cards"></div>
+      <p class="results-note">
+        Ranked by model confidence. Results are based on Ethiopian agricultural profiles from the Mendeley dataset (Alemu, 2024). Climate data sourced from Open-Meteo ERA5 reanalysis; topography from SRTM/NASADEM.
+      </p>
+      <button class="btn-reset" id="reset-btn">&#8593; Run another analysis</button>
+    </section>
+
+    <div class="error-box" id="error-box" hidden>
+      <p id="error-msg"></p>
+    </div>
 
   </div>
+</main>
 
-</div>
+<!-- ABOUT SECTION (blank for now) -->
+<section class="about-section" id="about">
+  <div class="about-inner">
+    <p class="about-eyebrow">About the Project</p>
+    <h2 class="about-title">Model performance, methodology<br>and research findings.</h2>
+    <p class="about-placeholder">Analytics and charts coming soon — run Step 5 evaluation scripts first to generate figures.</p>
+  </div>
+</section>
 
-<footer>
+<!-- FOOTER -->
+<footer class="footer">
   <div class="footer-inner">
-    <div>Crop Recommendation System — Group 18 Final Year Project</div>
-    <div>Kwara State University, Malete &nbsp;|&nbsp;
-         XGBoost Model &nbsp;|&nbsp;
-         Climate: Open-Meteo ERA5 &nbsp;|&nbsp;
-         Topography: NASADEM</div>
+    <span>CropIQ &mdash; Group 18 Final Year Project &mdash; Kwara State University, Malete</span>
+    <span>XGBoost &middot; Open-Meteo ERA5 &middot; SRTM/NASADEM &middot; Mendeley Dataset</span>
   </div>
 </footer>
 
-<input type="hidden" id="hLat"/>
-<input type="hidden" id="hLon"/>
-<input type="hidden" id="hSoil"/>
-<input type="hidden" id="hLocName"/>
-
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

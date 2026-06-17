@@ -1,350 +1,224 @@
-/* =====================================================
-   CROP RECOMMENDATION SYSTEM — MAIN JS
-   Group 18 | Kwara State University
-   ===================================================== */
+// ── Soil definitions ──────────────────────────────────────────────────
+const SOILS = [
+  {name:'black',      label:'Black',       hex:'#1C1C1C', ph:7.2,N:1.8,P:18,K:320,Zn:1.2,S:12},
+  {name:'brown',      label:'Brown',       hex:'#7B4F2E', ph:6.5,N:1.2,P:22,K:280,Zn:0.9,S:10},
+  {name:'dark brown', label:'Dark Brown',  hex:'#4A2C1A', ph:6.2,N:1.5,P:20,K:300,Zn:1.0,S:11},
+  {name:'dark gray',  label:'Dark Gray',   hex:'#4A4A4A', ph:7.0,N:1.0,P:15,K:260,Zn:0.7,S:8 },
+  {name:'gray',       label:'Gray',        hex:'#9A9A8A', ph:6.8,N:0.9,P:14,K:240,Zn:0.6,S:7 },
+  {name:'red',        label:'Red',         hex:'#A83232', ph:5.2,N:0.6,P:8, K:160,Zn:0.4,S:5 },
+  {name:'reddish brown',label:'Reddish Brown',hex:'#8B3A2A',ph:5.8,N:0.7,P:10,K:175,Zn:0.5,S:6},
+  {name:'yellow',     label:'Yellow',      hex:'#C9A84C', ph:6.0,N:0.5,P:9, K:150,Zn:0.3,S:4 },
+];
 
-const DEFAULT_LAT = 9.0054;
-const DEFAULT_LON = 38.7636;
+// ── State ─────────────────────────────────────────────────────────────
+let lat=null, lon=null, envData={}, selectedSoil=null, map, marker;
 
-let map, marker;
-let envData = {};
+// ── Keep-alive ping every 10 min ──────────────────────────────────────
+setInterval(()=>fetch('/ping'),600000);
 
-// ── Init map ──────────────────────────────────────────
-window.addEventListener('load', function () {
-  map = L.map('map').setView([DEFAULT_LAT, DEFAULT_LON], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+// ── Map init ──────────────────────────────────────────────────────────
+function initMap(){
+  map = L.map('map').setView([9.0,38.7],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap contributors', maxZoom:18
   }).addTo(map);
 
-  map.on('click', function (e) {
-    placeMarker(e.latlng.lat, e.latlng.lng, null);
+  const icon = L.divIcon({
+    html:'<div style="width:14px;height:14px;background:#6B7C3F;border:2.5px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>',
+    iconSize:[14,14],iconAnchor:[7,7],className:''
   });
 
-  document.getElementById('addrInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); searchAddr(); }
+  map.on('click',e=>pinLocation(e.latlng.lat,e.latlng.lng,icon));
+
+  // Address search
+  document.getElementById('search-btn').addEventListener('click',()=>{
+    const q = document.getElementById('address-input').value.trim();
+    if(!q) return;
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
+      .then(r=>r.json()).then(res=>{
+        if(!res.length){alert('Location not found. Try a different search term.');return;}
+        const r0 = res[0];
+        map.setView([r0.lat,r0.lon],10);
+        pinLocation(parseFloat(r0.lat),parseFloat(r0.lon),icon);
+      }).catch(()=>alert('Search failed — try clicking the map instead.'));
   });
-  document.getElementById('mapSearch').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); searchOnMap(); }
+  document.getElementById('address-input').addEventListener('keydown',e=>{
+    if(e.key==='Enter') document.getElementById('search-btn').click();
   });
+
+  // Geolocation
+  document.getElementById('locate-btn').addEventListener('click',()=>{
+    if(!navigator.geolocation){alert('Geolocation not supported by your browser.');return;}
+    navigator.geolocation.getCurrentPosition(
+      pos=>{ map.setView([pos.coords.latitude,pos.coords.longitude],12);
+             pinLocation(pos.coords.latitude,pos.coords.longitude,icon); },
+      ()=>alert('Could not get your location. Please allow location access.')
+    );
+  });
+}
+
+async function pinLocation(la,lo,icon){
+  lat=parseFloat(la.toFixed(6));
+  lon=parseFloat(lo.toFixed(6));
+  if(marker) map.removeLayer(marker);
+  marker = L.marker([lat,lon],{icon,draggable:true}).addTo(map);
+  marker.on('dragend',e=>{
+    const p=e.target.getLatLng();
+    pinLocation(p.lat,p.lng,icon);
+  });
+  document.getElementById('status-text').textContent=`Pinned: ${lat}, ${lon}`;
+  document.getElementById('fetch-indicator').hidden=false;
+  document.getElementById('fetch-done').hidden=true;
+  document.getElementById('env-chips').hidden=true;
+  await fetchEnvData(lat,lon);
+}
+
+async function fetchEnvData(la,lo){
+  try{
+    const res  = await fetch('/get_env_data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:la,lon:lo})});
+    envData    = await res.json();
+    fillClimateFields(envData);
+    setField('elevation',envData.elevation); setField('slope',envData.slope);
+    setField('aspect',envData.aspect);       setField('TWI',envData.TWI);
+    document.getElementById('fetch-indicator').hidden=true;
+    document.getElementById('fetch-done').hidden=false;
+    document.getElementById('env-chips').hidden=false;
+    document.getElementById('chip-loc').textContent=`📍 ${la.toFixed(4)}, ${lo.toFixed(4)}`;
+    document.getElementById('chip-elev').textContent=`⛰ ${envData.elevation}m`;
+    document.getElementById('chip-temp').textContent=`🌡 ${envData.avg_temp}°C avg`;
+    document.getElementById('chip-rain').textContent=`🌧 ${envData.annual_prec}mm/yr`;
+  }catch(e){
+    document.getElementById('fetch-indicator').hidden=true;
+    document.getElementById('status-text').textContent='Could not fetch data — fill climate fields manually.';
+  }
+}
+
+function fillClimateFields(d){
+  const map={
+    'T2M_MAX-W':d['T2M_MAX-W'],'T2M_MIN-W':d['T2M_MIN-W'],'PRECTOTCORR-W':d['PRECTOTCORR-W'],'QV2M-W':d['QV2M-W'],
+    'T2M_MAX-Sp':d['T2M_MAX-Sp'],'T2M_MIN-Sp':d['T2M_MIN-Sp'],'PRECTOTCORR-Sp':d['PRECTOTCORR-Sp'],'QV2M-Sp':d['QV2M-Sp'],
+    'T2M_MAX-Su':d['T2M_MAX-Su'],'T2M_MIN-Su':d['T2M_MIN-Su'],'PRECTOTCORR-Su':d['PRECTOTCORR-Su'],'QV2M-Su':d['QV2M-Su'],
+    'T2M_MAX-Au':d['T2M_MAX-Au'],'T2M_MIN-Au':d['T2M_MIN-Au'],'PRECTOTCORR-Au':d['PRECTOTCORR-Au'],'QV2M-Au':d['QV2M-Au'],
+    'WD10M':d['WD10M'],'WS2M_RANGE':d['WS2M_RANGE'],'GWETTOP':d['GWETTOP'],'CLOUD_AMT':d['CLOUD_AMT'],'PS':d['PS'],
+  };
+  Object.entries(map).forEach(([id,val])=>setField(id,val,true));
+}
+
+function setField(id,val,autofill=false){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.value=val;
+  if(autofill) el.classList.add('autofilled'); else el.classList.remove('autofilled');
+}
+
+// ── Soil grid ─────────────────────────────────────────────────────────
+function initSoilGrid(){
+  const grid=document.getElementById('soil-grid');
+  SOILS.forEach(s=>{
+    const card=document.createElement('div');
+    card.className='soil-card';
+    card.innerHTML=`<div class="soil-swatch" style="background:${s.hex}"></div>
+      <div class="soil-name">${s.label}</div>
+      <div class="soil-npk">pH ${s.ph} · N ${s.N} · P ${s.P}</div>`;
+    card.addEventListener('click',()=>selectSoil(s,card));
+    grid.appendChild(card);
+  });
+}
+
+function selectSoil(s,card){
+  document.querySelectorAll('.soil-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedSoil=s.name;
+  document.getElementById('soil-color-input').value=s.name;
+  setField('Ph',s.ph); setField('N',s.N); setField('P',s.P);
+  setField('K',s.K);   setField('Zn',s.Zn); setField('S',s.S);
+}
+
+// ── Collapsible panels ────────────────────────────────────────────────
+function initToggles(){
+  [['climate-toggle','climate-fields'],['terrain-toggle','terrain-fields']].forEach(([btnId,panelId])=>{
+    const btn=document.getElementById(btnId);
+    const panel=document.getElementById(panelId);
+    if(!btn||!panel) return;
+    btn.addEventListener('click',()=>{
+      const open=!panel.hidden;
+      panel.hidden=open;
+      btn.textContent=open?'Show ⌄':'Hide ⌃';
+    });
+  });
+}
+
+// ── Submit ────────────────────────────────────────────────────────────
+document.getElementById('submit-btn').addEventListener('click',async()=>{
+  const warn=document.getElementById('submit-warn');
+  if(!lat){warn.hidden=false;warn.textContent='Please pin a location on the map first.';return;}
+  if(!selectedSoil){warn.hidden=false;warn.textContent='Please select a soil type.';return;}
+  warn.hidden=true;
+
+  const btn=document.getElementById('submit-btn');
+  btn.querySelector('.btn-text').hidden=true;
+  btn.querySelector('.btn-loading').hidden=false;
+  btn.disabled=true;
+  document.getElementById('results').hidden=true;
+  document.getElementById('error-box').hidden=true;
+
+  const keys=['Ph','N','P','K','Zn','S',
+    'T2M_MAX-W','T2M_MIN-W','PRECTOTCORR-W','QV2M-W',
+    'T2M_MAX-Sp','T2M_MIN-Sp','PRECTOTCORR-Sp','QV2M-Sp',
+    'T2M_MAX-Su','T2M_MIN-Su','PRECTOTCORR-Su','QV2M-Su',
+    'T2M_MAX-Au','T2M_MIN-Au','PRECTOTCORR-Au','QV2M-Au',
+    'WD10M','WS2M_RANGE','GWETTOP','CLOUD_AMT','PS',
+    'elevation','slope','aspect','TWI'];
+  const payload={soil_color:selectedSoil,
+    location_name:document.getElementById('address-input').value||`${lat}, ${lon}`,
+    avg_temp:envData.avg_temp||22.1, annual_prec:envData.annual_prec||850};
+  keys.forEach(k=>{const el=document.getElementById(k);payload[k]=el?parseFloat(el.value)||0:0;});
+
+  try{
+    const res=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!data.success) throw new Error(data.error);
+    renderResults(data);
+  }catch(e){
+    document.getElementById('error-msg').textContent='Something went wrong: '+e.message;
+    document.getElementById('error-box').hidden=false;
+  }finally{
+    btn.querySelector('.btn-text').hidden=false;
+    btn.querySelector('.btn-loading').hidden=true;
+    btn.disabled=false;
+  }
 });
 
-// ── Tabs ──────────────────────────────────────────────
-function switchTab(btn, tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
-  if (tab === 'map' && map) setTimeout(() => map.invalidateSize(), 100);
-}
-
-// ── Place marker ──────────────────────────────────────
-function placeMarker(lat, lon, name) {
-  if (!map) return;
-  if (marker) map.removeLayer(marker);
-
-  const icon = L.divIcon({
-    className: '',
-    html: `<div style="
-      width:26px;height:26px;
-      background:#2D6A4F;
-      border-radius:50% 50% 50% 0;
-      transform:rotate(-45deg);
-      border:3px solid white;
-      box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-    </div>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 26]
+function renderResults(data){
+  document.getElementById('results-location').innerHTML=
+    `📍 ${data.location} &nbsp;·&nbsp; ⛰ ${data.elevation}m &nbsp;·&nbsp; 🌡 ${data.avg_temp}°C &nbsp;·&nbsp; 🌧 ${data.annual_prec}mm/yr`;
+  const cards=document.getElementById('results-cards');
+  cards.innerHTML='';
+  const ranks=['1st choice','2nd choice','3rd choice'];
+  data.top3.forEach((r,i)=>{
+    const card=document.createElement('div');
+    card.className=`result-card rank-${i+1}`;
+    card.innerHTML=`
+      <div class="result-rank">${ranks[i]}</div>
+      <div class="result-emoji">${r.emoji}</div>
+      <div class="result-crop">${r.crop}</div>
+      <div class="result-season">Best season: ${r.season}</div>
+      <div class="result-desc">${r.desc}</div>
+      <div class="result-prob">${r.prob}% confidence</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>`;
+    cards.appendChild(card);
+    setTimeout(()=>card.querySelector('.bar-fill').style.width=r.prob+'%',80*(i+1));
   });
-
-  marker = L.marker([lat, lon], { icon, draggable: true }).addTo(map);
-  marker.on('dragend', function () {
-    const ll = marker.getLatLng();
-    reverseGeocode(ll.lat, ll.lng);
-  });
-
-  map.setView([lat, lon], 11);
-  setLocation(lat, lon, name);
+  document.getElementById('results').hidden=false;
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-// ── Geocode ───────────────────────────────────────────
-async function geocode(query) {
-  const res  = await fetch(
-    `https://nominatim.openstreetmap.org/search` +
-    `?q=${encodeURIComponent(query)}&format=json&limit=1`,
-    { headers: { 'Accept-Language': 'en' } }
-  );
-  const data = await res.json();
-  if (!data.length) throw new Error(
-    'Location not found. Try adding "Ethiopia" e.g. "Jimma, Ethiopia"'
-  );
-  return {
-    lat:  parseFloat(data[0].lat),
-    lon:  parseFloat(data[0].lon),
-    name: data[0].display_name.split(',').slice(0, 3).join(',')
-  };
-}
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  document.getElementById('results').hidden=true;
+  window.scrollTo({top:0,behavior:'smooth'});
+});
 
-// ── Reverse geocode ───────────────────────────────────
-async function reverseGeocode(lat, lon) {
-  try {
-    const res  = await fetch(
-      `https://nominatim.openstreetmap.org/reverse` +
-      `?lat=${lat}&lon=${lon}&format=json`,
-      { headers: { 'Accept-Language': 'en' } }
-    );
-    const data = await res.json();
-    const name = data.display_name
-      ? data.display_name.split(',').slice(0, 3).join(',')
-      : `Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
-    setLocation(lat, lon, name);
-  } catch {
-    setLocation(lat, lon, null);
-  }
-}
-
-// ── Address search ────────────────────────────────────
-async function searchAddr() {
-  const q   = document.getElementById('addrInput').value.trim();
-  if (!q) return;
-  const btn = document.querySelector('#tab-addr .btn-action');
-  btn.textContent = '...';
-  btn.disabled    = true;
-  try {
-    const r = await geocode(q);
-    if (map) placeMarker(r.lat, r.lon, r.name);
-    else setLocation(r.lat, r.lon, r.name);
-  } catch (e) { alert(e.message); }
-  btn.textContent = 'Search';
-  btn.disabled    = false;
-}
-
-// ── Map search ────────────────────────────────────────
-async function searchOnMap() {
-  const q   = document.getElementById('mapSearch').value.trim();
-  if (!q) return;
-  const btn = document.querySelector('#tab-map .btn-action');
-  btn.textContent = '...';
-  btn.disabled    = true;
-  try {
-    const r = await geocode(q);
-    placeMarker(r.lat, r.lon, r.name);
-  } catch (e) { alert(e.message); }
-  btn.textContent = 'Search';
-  btn.disabled    = false;
-}
-
-// ── Set location ──────────────────────────────────────
-function setLocation(lat, lon, name) {
-  document.getElementById('hLat').value     = lat;
-  document.getElementById('hLon').value     = lon;
-  document.getElementById('hLocName').value = name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-
-  const locName   = name || `Lat ${parseFloat(lat).toFixed(4)}, Lon ${parseFloat(lon).toFixed(4)}`;
-  const locCoords = `Lat: ${parseFloat(lat).toFixed(4)}, Lon: ${parseFloat(lon).toFixed(4)}`;
-  document.getElementById('locName').textContent   = locName;
-  document.getElementById('locCoords').textContent = locCoords;
-  document.getElementById('locConfirmed').classList.remove('hidden');
-
-  document.getElementById('step-ind-1').classList.add('done');
-  document.getElementById('step-ind-2').classList.add('active');
-
-  fetchEnvData(lat, lon);
-}
-
-// ── Fetch climate + topography ────────────────────────
-async function fetchEnvData(lat, lon) {
-  const afBar  = document.getElementById('afBar');
-  const afDone = document.getElementById('afDone');
-
-  afBar.classList.remove('hidden');
-  afDone.classList.add('hidden');
-  document.getElementById('climateSummary').classList.add('hidden');
-  document.getElementById('afMsg').textContent =
-    'Fetching climate & terrain data from Open-Meteo & NASADEM...';
-
-  try {
-    const res = await fetch('/get_env_data', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ lat, lon })
-    });
-    envData = await res.json();
-
-    // Update topography fields
-    if (envData.elevation) document.getElementById('fElev').value   = Math.round(envData.elevation);
-    if (envData.slope)     document.getElementById('fSlope').value  = envData.slope;
-    if (envData.aspect)    document.getElementById('fAspect').value = envData.aspect;
-    if (envData.TWI)       document.getElementById('fTWI').value    = envData.TWI;
-
-    // Show climate summary
-    updateClimateSummary(envData);
-
-    afBar.classList.add('hidden');
-    afDone.classList.remove('hidden');
-
-  } catch (e) {
-    afBar.classList.add('hidden');
-    document.getElementById('afMsg').textContent =
-      '⚠️ Could not fetch data. Default values will be used.';
-    afBar.classList.remove('hidden');
-  }
-}
-
-// ── Update climate summary box ────────────────────────
-function updateClimateSummary(data) {
-  const avgTemp  = data['avg_temp']    || data['T2M_MAX-Su'] || null;
-  const rain     = data['annual_prec'] || null;
-  const humidity = data['QV2M-Su']     || null;
-  const elevation= data['elevation']   || null;
-  const slope    = data['slope']       || null;
-  const cloud    = data['CLOUD_AMT']   || null;
-
-  document.getElementById('cs-temp').textContent  =
-    avgTemp   ? `${parseFloat(avgTemp).toFixed(1)}°C`    : '—';
-  document.getElementById('cs-rain').textContent  =
-    rain      ? `${parseFloat(rain).toFixed(0)} mm/yr`   : '—';
-  document.getElementById('cs-hum').textContent   =
-    humidity  ? `${parseFloat(humidity).toFixed(1)} g/kg`: '—';
-  document.getElementById('cs-elev').textContent  =
-    elevation ? `${Math.round(elevation)} m`              : '—';
-  document.getElementById('cs-slope').textContent =
-    slope     ? `${parseFloat(slope).toFixed(1)}°`        : '—';
-  document.getElementById('cs-cloud').textContent =
-    cloud     ? `${parseFloat(cloud).toFixed(0)}%`        : '—';
-
-  document.getElementById('climateSummary').classList.remove('hidden');
-
-  // Update seasonal climate in advanced panel
-  if (data['T2M_MAX-W'])      document.getElementById('fT2M_MAX_W').value  = data['T2M_MAX-W'];
-  if (data['T2M_MAX-Sp'])     document.getElementById('fT2M_MAX_Sp').value = data['T2M_MAX-Sp'];
-  if (data['T2M_MAX-Su'])     document.getElementById('fT2M_MAX_Su').value = data['T2M_MAX-Su'];
-  if (data['T2M_MAX-Au'])     document.getElementById('fT2M_MAX_Au').value = data['T2M_MAX-Au'];
-  if (data['PRECTOTCORR-W'])  document.getElementById('fPREC_W').value     = data['PRECTOTCORR-W'];
-  if (data['PRECTOTCORR-Sp']) document.getElementById('fPREC_Sp').value    = data['PRECTOTCORR-Sp'];
-  if (data['PRECTOTCORR-Su']) document.getElementById('fPREC_Su').value    = data['PRECTOTCORR-Su'];
-  if (data['PRECTOTCORR-Au']) document.getElementById('fPREC_Au').value    = data['PRECTOTCORR-Au'];
-}
-
-// ── Soil colour ───────────────────────────────────────
-function selectSoil(card, name) {
-  document.querySelectorAll('.soil-card').forEach(c => c.classList.remove('selected'));
-  card.classList.add('selected');
-  document.getElementById('hSoil').value = name;
-  document.getElementById('soilErr').classList.add('hidden');
-  document.getElementById('step-ind-2').classList.add('done');
-  document.getElementById('step-ind-3').classList.add('active');
-}
-
-// ── Advanced toggle ───────────────────────────────────
-function toggleAdv(btn) {
-  const panel = document.getElementById('advPanel');
-  panel.classList.toggle('open');
-  btn.textContent = panel.classList.contains('open')
-    ? 'Hide Advanced Parameters ▲'
-    : 'Show Advanced Parameters ▼';
-}
-
-// ── Submit prediction ──────────────────────────────────
-async function submitPrediction() {
-  if (!document.getElementById('hLat').value) {
-    showErr('Please select a farm location first.'); return;
-  }
-  if (!document.getElementById('hSoil').value) {
-    document.getElementById('soilErr').classList.remove('hidden');
-    document.getElementById('soilErr').scrollIntoView({ behavior: 'smooth' });
-    return;
-  }
-
-  hideErr();
-  document.getElementById('loading').classList.remove('hidden');
-  document.getElementById('results').classList.add('hidden');
-  document.querySelector('.btn-submit').disabled = true;
-
-  const payload = {
-    lat:           document.getElementById('hLat').value,
-    lon:           document.getElementById('hLon').value,
-    location_name: document.getElementById('hLocName').value,
-    soil_color:    document.getElementById('hSoil').value,
-    Ph:   document.getElementById('fPh').value,
-    N:    document.getElementById('fN').value,
-    P:    document.getElementById('fP').value,
-    K:    document.getElementById('fK').value,
-    Zn:   document.getElementById('fZn').value,
-    S:    document.getElementById('fS').value,
-    elevation: document.getElementById('fElev').value,
-    slope:     document.getElementById('fSlope').value,
-    aspect:    document.getElementById('fAspect').value,
-    TWI:       document.getElementById('fTWI').value,
-    ...envData
-  };
-
-  try {
-    const res  = await fetch('/predict', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (data.success) showResults(data);
-    else showErr(data.error || 'Prediction failed. Please try again.');
-  } catch (e) {
-    showErr('Connection error. Please try again.');
-  }
-
-  document.getElementById('loading').classList.add('hidden');
-  document.querySelector('.btn-submit').disabled = false;
-}
-
-// ── Show results ──────────────────────────────────────
-function showResults(data) {
-  document.getElementById('resultsMeta').innerHTML =
-    `Location: <span>${data.location}</span> &nbsp;|&nbsp; ` +
-    `Elevation: <span>${data.elevation}m</span> &nbsp;|&nbsp; ` +
-    `Avg Temp: <span>${data.avg_temp}°C</span> &nbsp;|&nbsp; ` +
-    `Rainfall: <span>${data.annual_prec}mm/yr</span>`;
-
-  const ranks = ['1st — Best Match', '2nd Choice', '3rd Choice'];
-
-  // Normalize top 3 to sum to 100%
-  const total = data.top3.reduce((sum, r) => sum + r.prob, 0);
-  const normalized = data.top3.map(r => ({
-    ...r,
-    normProb: total > 0 ? Math.round((r.prob / total) * 1000) / 10 : r.prob
-  }));
-
-  document.getElementById('resultsGrid').innerHTML = normalized.map((r, i) => {
-    const prob      = r.normProb;
-    const confColor = prob >= 40 ? '#276749' : prob >= 25 ? '#D69E2E' : '#C53030';
-    const confLabel = prob >= 40 ? 'Strongly suits your farm'
-                    : prob >= 25 ? 'Moderately suits your farm'
-                    : 'May suit your farm';
-    return `
-    <div class="result-card">
-      <div class="r-rank">${ranks[i]}</div>
-      <div class="r-emoji">${r.emoji}</div>
-      <div class="r-crop">${r.crop}</div>
-      <div class="r-prob" style="color:${confColor}">${prob}%</div>
-      <div class="r-conf-label">Relative Suitability Score</div>
-      <div class="r-suit-label" style="color:${confColor}">${confLabel}</div>
-      <div class="conf-bar">
-        <div class="conf-fill" style="width:${prob}%;background:${confColor}"></div>
-      </div>
-      <div class="r-season">Planting Season: ${r.season}</div>
-      <div class="r-desc">${r.desc}</div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('results').classList.remove('hidden');
-  document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-}
-
-// ── Error helpers ──────────────────────────────────────
-function showErr(msg) {
-  const el = document.getElementById('errBox');
-  el.textContent = msg;
-  el.classList.remove('hidden');
-  el.scrollIntoView({ behavior: 'smooth' });
-}
-function hideErr() {
-  document.getElementById('errBox').classList.add('hidden');
-}
+// ── Boot ──────────────────────────────────────────────────────────────
+initMap();
+initSoilGrid();
+initToggles();
