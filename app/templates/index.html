@@ -29,7 +29,7 @@
   <div class="hero-inner">
     <p class="hero-eyebrow">Soil &times; Climate &times; Terrain</p>
     <h1 class="hero-title">Know what your<br>land wants to grow.</h1>
-    <p class="hero-sub">Pin your field on the map, pick your soil colour, and CropIQ fetches real climate and terrain data automatically — then recommends the best crops for your land.</p>
+    <p class="hero-sub">Pin your field on the map, pick your soil colour, and CropIQ fetches real climate and terrain data automatically. Then recommends the best crops for your land.</p>
     <div class="hero-actions">
       <a href="#step1" class="btn-primary">Get started &darr;</a>
       <a href="#about" class="btn-ghost">About the project</a>
@@ -47,7 +47,7 @@
         <span class="step-num">01</span>
         <div class="step-meta">
           <div class="group-label">Pin Your Field Location</div>
-          <p class="step-hint">Click anywhere on the map — or use your current location. Climate and terrain data loads automatically.</p>
+          <p class="step-hint">Click anywhere on the map or use your current location. Climate and terrain data loads automatically.</p>
         </div>
       </div>
 
@@ -64,7 +64,7 @@
       <div id="map"></div>
 
       <div class="location-status" id="location-status">
-        <span id="status-text">No location selected — click map or search above</span>
+        <span id="status-text">No location selected. click map or search above</span>
         <span class="fetch-indicator" id="fetch-indicator" hidden>
           <span class="spinner"></span> Fetching climate &amp; terrain…
         </span>
@@ -85,7 +85,7 @@
         <span class="step-num">02</span>
         <div class="step-meta">
           <div class="group-label">Soil Classification</div>
-          <p class="step-hint">Select the colour that best matches your farm soil. Nutrient values pre-fill automatically — adjust if you have lab results.</p>
+          <p class="step-hint">Select the colour that best matches your farm soil. Nutrient values pre-filled automatically. Adjust if you have lab results.</p>
         </div>
       </div>
       <div class="soil-grid" id="soil-grid"></div>
@@ -250,42 +250,42 @@
 
       <div class="figure-block">
         <img src="{{ url_for('static', filename='img/fig1_class_distribution_raw.png') }}" alt="Figure 1: Crop Class Distribution Before Balancing" class="fig-img"/>
-        <p class="fig-caption"><strong>Figure 1</strong> — Crop class distribution before balancing. Teff dominates with 1,260 records while Red Pepper has only 29, yielding a 43.4:1 imbalance ratio. BorderlineSMOTE was applied to bring minority classes to 500 training samples.</p>
+        <p class="fig-caption"><strong>Figure 1:</strong>Crop class distribution before balancing. Teff dominates with 1,260 records while Red Pepper has only 29, yielding a 43.4:1 imbalance ratio. BorderlineSMOTE was applied to bring minority classes to 500 training samples.</p>
       </div>
 
       <div class="figure-block">
         <img src="{{ url_for('static', filename='img/fig2_class_distribution_smote.png') }}" alt="Figure 2: Class Distribution Before and After SMOTE" class="fig-img"/>
-        <p class="fig-caption"><strong>Figure 2</strong> — Training set class distribution before and after BorderlineSMOTE (target = 500). Majority classes (Teff, Maize, Wheat, Barley) are left untouched; all minority classes are up-sampled to 500 synthetic samples.</p>
+        <p class="fig-caption"><strong>Figure 2:</strong>Training set class distribution before and after BorderlineSMOTE (target = 500). Majority classes (Teff, Maize, Wheat, Barley) are left untouched; all minority classes are up-sampled to 500 synthetic samples.</p>
       </div>
 
       <div class="figure-block">
         <img src="{{ url_for('static', filename='img/fig3_feature_statistics.png') }}" alt="Figure 3: Descriptive Statistics of Key Numeric Features" class="fig-img"/>
-        <p class="fig-caption"><strong>Figure 3</strong> — Descriptive statistics of key soil nutrient features. High standard deviations in K (202.25) and P (34.14) indicate wide variability across Ethiopian highland zones. Outlier capping at the 1st–99th percentile was applied prior to training.</p>
+        <p class="fig-caption"><strong>Figure 3:</strong>Descriptive statistics of key soil nutrient features. High standard deviations in K (202.25) and P (34.14) indicate wide variability across Ethiopian highland zones. Outlier capping at the 1st–99th percentile was applied prior to training.</p>
       </div>
 
       <div class="figure-block">
         <img src="{{ url_for('static', filename='img/fig4_model_accuracy_comparison.png') }}" alt="Figure 4: Model Accuracy Comparison" class="fig-img"/>
-        <p class="fig-caption"><strong>Figure 4</strong> — Test set accuracy comparison across all three models. XGBoost achieved the highest accuracy at 64.22%, outperforming both Random Forest (56.78%) and the soft ensemble combination (63.94%), making it the selected deployment model.</p>
+        <p class="fig-caption"><strong>Figure 4:</strong>Test set accuracy comparison across all three models. XGBoost achieved the highest accuracy at 64.22%, outperforming both Random Forest (56.78%) and the soft ensemble combination (63.94%), making it the selected deployment model.</p>
       </div>
 
       <div class="figure-block">
         <img src="{{ url_for('static', filename='img/fig5_per_class_accuracy.png') }}" alt="Figure 5: Per-Class Accuracy — XGBoost" class="fig-img"/>
-        <p class="fig-caption"><strong>Figure 5</strong> — Per-class accuracy for XGBoost. Red Pepper (98.3%) and Potato (91.7%) achieved the highest scores. Bean (25.0%) was the most challenging class, likely due to overlapping soil and climate profiles with Barley and Wheat.</p>
+        <p class="fig-caption"><strong>Figure 5:</strong>Per-class accuracy for XGBoost. Red Pepper (98.3%) and Potato (91.7%) achieved the highest scores. Bean (25.0%) was the most challenging class, likely due to overlapping soil and climate profiles with Barley and Wheat.</p>
       </div>
 
       <div class="figure-block">
         <img src="{{ url_for('static', filename='img/fig6_confusion_matrix.png') }}" alt="Figure 6: Confusion Matrix — XGBoost" class="fig-img"/>
-        <p class="fig-caption"><strong>Figure 6</strong> — Confusion matrix for XGBoost on the test set (n=1,062). The most common misclassification is Teff predicted as Maize (36 cases) and Wheat predicted as Barley (26 cases), reflecting the climate profile overlap between these highland cereals.</p>
+        <p class="fig-caption"><strong>Figure 6:</strong>Confusion matrix for XGBoost on the test set (n=1,062). The most common misclassification is Teff predicted as Maize (36 cases) and Wheat predicted as Barley (26 cases), reflecting the climate profile overlap between these highland cereals.</p>
       </div>
 
       <div class="figure-block">
         <img src="{{ url_for('static', filename='img/fig7_feature_importances.png') }}" alt="Figure 7: Top 20 Feature Importances" class="fig-img"/>
-        <p class="fig-caption"><strong>Figure 7</strong> — Top 20 XGBoost feature importances by gain. Winter precipitation (PRECTOTCORR-W, 0.0688) and wind direction (WD10M, 0.0614) are the strongest predictors. Engineered features T_range_Au and T_range_Su both appear in the top 15, validating the feature engineering step.</p>
+        <p class="fig-caption"><strong>Figure 7:</strong>Top 20 XGBoost feature importances by gain. Winter precipitation (PRECTOTCORR-W, 0.0688) and wind direction (WD10M, 0.0614) are the strongest predictors. Engineered features T_range_Au and T_range_Su both appear in the top 15, validating the feature engineering step.</p>
       </div>
 
       <div class="figure-block">
         <img src="{{ url_for('static', filename='img/fig8_precision_recall_f1.png') }}" alt="Figure 8: Per-Class Precision, Recall and F1-Score" class="fig-img"/>
-        <p class="fig-caption"><strong>Figure 8</strong> — Per-class Precision, Recall and F1-Score. The weighted F1 average is 64.1% (dashed line). Red Pepper, Potato and Dagussa exceed 84% F1, while Bean (30.9%) and Barley (43.5%) remain below average due to class overlap with similar highland crops.</p>
+        <p class="fig-caption"><strong>Figure 8:</strong>Per-class Precision, Recall and F1-Score. The weighted F1 average is 64.1% (dashed line). Red Pepper, Potato and Dagussa exceed 84% F1, while Bean (30.9%) and Barley (43.5%) remain below average due to class overlap with similar highland crops.</p>
       </div>
     </div>
 
@@ -299,7 +299,7 @@
 
       <!-- Members -->
       <div class="team-block">
-        <div class="team-label">Group 18 — Members</div>
+        <div class="team-label">Project Researchers</div>
         <div class="members-grid">
           <div class="member-card"><span class="member-surname">ABDULQUADIR</span> Tohir Bolarinwa</div>
           <div class="member-card"><span class="member-surname">ADEBAYO</span> Ebenezer Oluwakoyode</div>
@@ -333,7 +333,7 @@
 <!-- FOOTER -->
 <footer class="footer">
   <div class="footer-inner">
-    <span>CropIQ &mdash; Group 18 Final Year Project &mdash; Kwara State University, Malete</span>
+    <span>CropIQ &mdash; XGBoost crop recommendation system &mdash; Department of Computer Science &mdash; Kwara State University, Malete &mdash; 2026</span>
     <span>XGBoost &middot; Open-Meteo ERA5 &middot; SRTM/NASADEM &middot; Mendeley Dataset</span>
   </div>
 </footer>
