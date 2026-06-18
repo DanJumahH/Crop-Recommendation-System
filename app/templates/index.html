@@ -211,12 +211,122 @@
   </div>
 </main>
 
-<!-- ABOUT SECTION (blank for now) -->
+<!-- ABOUT SECTION -->
 <section class="about-section" id="about">
   <div class="about-inner">
+
+    <!-- Header -->
     <p class="about-eyebrow">About the Project</p>
     <h2 class="about-title">Model performance, methodology<br>and research findings.</h2>
-    <p class="about-placeholder">Analytics and charts coming soon — run Step 5 evaluation scripts first to generate figures.</p>
+    <p class="about-lead">CropIQ is a final year project by Group 18, Department of Computer Science, Kwara State University, Malete. The system uses XGBoost machine learning trained on an Ethiopian agricultural dataset (Alemu, 2024) augmented with real topographic features derived from SRTM/NASADEM elevation data and seasonal climate profiles from Open-Meteo ERA5 reanalysis.</p>
+
+    <!-- Key stats -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-num">64.22%</div>
+        <div class="stat-label">XGBoost Test Accuracy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">64.1%</div>
+        <div class="stat-label">Weighted F1-Score</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">11</div>
+        <div class="stat-label">Crop Classes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">3,841</div>
+        <div class="stat-label">Training Records</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">47</div>
+        <div class="stat-label">Features Used</div>
+      </div>
+    </div>
+
+    <!-- Figures -->
+    <div class="figures-section">
+      <h3 class="figures-title">Results &amp; Analysis</h3>
+
+      <div class="figure-block">
+        <img src="{{ url_for('static', filename='img/fig1_class_distribution_raw.png') }}" alt="Figure 1: Crop Class Distribution Before Balancing" class="fig-img"/>
+        <p class="fig-caption"><strong>Figure 1</strong> — Crop class distribution before balancing. Teff dominates with 1,260 records while Red Pepper has only 29, yielding a 43.4:1 imbalance ratio. BorderlineSMOTE was applied to bring minority classes to 500 training samples.</p>
+      </div>
+
+      <div class="figure-block">
+        <img src="{{ url_for('static', filename='img/fig2_class_distribution_smote.png') }}" alt="Figure 2: Class Distribution Before and After SMOTE" class="fig-img"/>
+        <p class="fig-caption"><strong>Figure 2</strong> — Training set class distribution before and after BorderlineSMOTE (target = 500). Majority classes (Teff, Maize, Wheat, Barley) are left untouched; all minority classes are up-sampled to 500 synthetic samples.</p>
+      </div>
+
+      <div class="figure-block">
+        <img src="{{ url_for('static', filename='img/fig3_feature_statistics.png') }}" alt="Figure 3: Descriptive Statistics of Key Numeric Features" class="fig-img"/>
+        <p class="fig-caption"><strong>Figure 3</strong> — Descriptive statistics of key soil nutrient features. High standard deviations in K (202.25) and P (34.14) indicate wide variability across Ethiopian highland zones. Outlier capping at the 1st–99th percentile was applied prior to training.</p>
+      </div>
+
+      <div class="figure-block">
+        <img src="{{ url_for('static', filename='img/fig4_model_accuracy_comparison.png') }}" alt="Figure 4: Model Accuracy Comparison" class="fig-img"/>
+        <p class="fig-caption"><strong>Figure 4</strong> — Test set accuracy comparison across all three models. XGBoost achieved the highest accuracy at 64.22%, outperforming both Random Forest (56.78%) and the soft ensemble combination (63.94%), making it the selected deployment model.</p>
+      </div>
+
+      <div class="figure-block">
+        <img src="{{ url_for('static', filename='img/fig5_per_class_accuracy.png') }}" alt="Figure 5: Per-Class Accuracy — XGBoost" class="fig-img"/>
+        <p class="fig-caption"><strong>Figure 5</strong> — Per-class accuracy for XGBoost. Red Pepper (98.3%) and Potato (91.7%) achieved the highest scores. Bean (25.0%) was the most challenging class, likely due to overlapping soil and climate profiles with Barley and Wheat.</p>
+      </div>
+
+      <div class="figure-block">
+        <img src="{{ url_for('static', filename='img/fig6_confusion_matrix.png') }}" alt="Figure 6: Confusion Matrix — XGBoost" class="fig-img"/>
+        <p class="fig-caption"><strong>Figure 6</strong> — Confusion matrix for XGBoost on the test set (n=1,062). The most common misclassification is Teff predicted as Maize (36 cases) and Wheat predicted as Barley (26 cases), reflecting the climate profile overlap between these highland cereals.</p>
+      </div>
+
+      <div class="figure-block">
+        <img src="{{ url_for('static', filename='img/fig7_feature_importances.png') }}" alt="Figure 7: Top 20 Feature Importances" class="fig-img"/>
+        <p class="fig-caption"><strong>Figure 7</strong> — Top 20 XGBoost feature importances by gain. Winter precipitation (PRECTOTCORR-W, 0.0688) and wind direction (WD10M, 0.0614) are the strongest predictors. Engineered features T_range_Au and T_range_Su both appear in the top 15, validating the feature engineering step.</p>
+      </div>
+
+      <div class="figure-block">
+        <img src="{{ url_for('static', filename='img/fig8_precision_recall_f1.png') }}" alt="Figure 8: Per-Class Precision, Recall and F1-Score" class="fig-img"/>
+        <p class="fig-caption"><strong>Figure 8</strong> — Per-class Precision, Recall and F1-Score. The weighted F1 average is 64.1% (dashed line). Red Pepper, Potato and Dagussa exceed 84% F1, while Bean (30.9%) and Barley (43.5%) remain below average due to class overlap with similar highland crops.</p>
+      </div>
+    </div>
+
+    <!-- Supervisor -->
+    <div class="team-section">
+      <div class="team-block">
+        <div class="team-label">Supervisor</div>
+        <div class="supervisor-name">Dr. (Mrs.) R.S Babatunde</div>
+        <div class="supervisor-role">Associate Professor, Department of Computer Science<br>Kwara State University, Malete</div>
+      </div>
+
+      <!-- Members -->
+      <div class="team-block">
+        <div class="team-label">Group 18 — Members</div>
+        <div class="members-grid">
+          <div class="member-card"><span class="member-surname">ABDULQUADIR</span> Tohir Bolarinwa</div>
+          <div class="member-card"><span class="member-surname">ADEBAYO</span> Ebenezer Oluwakoyode</div>
+          <div class="member-card"><span class="member-surname">ADEWUMI</span> Israel Oluwafemi</div>
+          <div class="member-card"><span class="member-surname">ADEBAYO</span> Oluwafemi Sunday</div>
+          <div class="member-card"><span class="member-surname">GENE</span> Nazir Muhammed</div>
+          <div class="member-card"><span class="member-surname">AHMED</span> David Oricha</div>
+          <div class="member-card"><span class="member-surname">AJASA</span> Ibukun James</div>
+          <div class="member-card"><span class="member-surname">ADEDIRAN</span> Samson Oluwasegun</div>
+          <div class="member-card"><span class="member-surname">LAWAL</span> Ibraheem Ayomide</div>
+        </div>
+      </div>
+
+      <!-- Dataset credit -->
+      <div class="team-block">
+        <div class="team-label">Dataset &amp; Tools</div>
+        <div class="credits-row">
+          <span class="credit-chip">Mendeley Data — Alemu (2024)</span>
+          <span class="credit-chip">Open-Meteo ERA5</span>
+          <span class="credit-chip">SRTM / NASADEM</span>
+          <span class="credit-chip">XGBoost</span>
+          <span class="credit-chip">BorderlineSMOTE</span>
+          <span class="credit-chip">Leaflet.js</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
